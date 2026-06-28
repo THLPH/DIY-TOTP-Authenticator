@@ -1,28 +1,64 @@
-# Browser Authenticator (TOTP)
+﻿# DIY TOTP Authenticator 🔑
 
-A lightweight, client-side 2FA (Two-Factor Authentication) tool built as a browser userscript. This project replaces the need for proprietary mobile authenticator apps by generating RFC 6238-compliant one-time passwords directly within the browser environment.
+![Manifest V3](https://img.shields.io/badge/Chrome-Manifest_V3-blue?style=flat-square)
+![Dependencies](https://img.shields.io/badge/Dependencies-0-success?style=flat-square)
+![License](https://img.shields.io/badge/License-MIT-orange?style=flat-square)
+![RFC 6238](https://img.shields.io/badge/RFC-6238-lightgrey?style=flat-square)
 
-## 🚀 Overview
-GitHub and other platforms are increasingly requiring 2FA. While mobile apps like Authy or Google Authenticator are standard, they often lock seeds into proprietary ecosystems. This project provides a **sovereign alternative**: a script that runs locally in your browser via Tampermonkey to generate codes securely.
+Zero-dependency 2FA code generator running on the browser's Web Crypto API (`crypto.subtle`). Generates standard 6-digit rolling codes locally without external libraries, analytics, or third-party servers.
 
-## ✨ Features
-* **Protocol Compliant:** Uses the `otpauth` library to handle SHA-1 hashing and time-step synchronization (RFC 6238).
-* **Zero-Server Architecture:** All secrets are stored and processed locally in the browser; no data ever leaves your machine.
-* **Seamless Integration:** Designed to run as a userscript, allowing for future automation of the 2FA input field on login pages.
-* **Lightweight:** Minimal dependencies and zero overhead compared to desktop or mobile applications.
+---
 
-## 🛠️ Technical Stack
-* **Language:** JavaScript (ES6+)
-* **Engine:** Tampermonkey / Greasemonkey
-* **Logic:** [OTPAuth](https://github.com/hectorm/otpauth) for TOTP generation.
-* **Storage:** Browser `localStorage` for persistent secret management.
+## What's in here
 
-## 📦 Installation
-1.  Install the [Tampermonkey](https://www.tampermonkey.net/) extension for your browser.
-2.  Create a new script in the Tampermonkey dashboard.
-3.  Copy the source code from `authenticator.user.js` in this repo and paste it into the editor.
-4.  Configure your secret key (base32) within the script.
+* `extension/` — Popup extension for Chromium-based browsers (Manifest V3).
+* `userscript/` — Standalone Tampermonkey script if you prefer not loading unpacked extensions.
 
-## 🔒 Security Note
-This tool is intended for users who maintain full control over their local machine's security. Ensure your browser profile is synced securely or your device is encrypted, as the 2FA secret is stored in the browser's local storage.
-When you link this on your resume, recruiters love to see a **"Why I built this"** section. It shows you aren't just following a tutorial, but solving a personal workflow problem.
+Both use the same setup: save your Base32 secret once, watch the 30-second timer count down, and click the code to copy it.
+
+---
+
+## Installation
+
+### Browser Extension
+
+Works on Chrome, Brave, and Edge:
+
+1. Go to your browser's extension page:
+   * **Chrome:** `chrome://extensions`
+   * **Brave:** `brave://extensions`
+   * **Edge:** `edge://extensions`
+2. Turn on **Developer mode** (toggle in top right on Chrome/Brave, or left sidebar on Edge).
+3. Click **Load unpacked** and select the `extension/` folder.
+4. Open the popup, enter your Base32 secret, and click **Save**.
+
+### Userscript
+
+1. Install [Tampermonkey](https://www.tampermonkey.net/).
+2. Create a new script, paste the code from `userscript/tiny-totp.user.js`, and save.
+3. Click the Tampermonkey icon on any page and click **Open Authenticator** to pop up the widget.
+
+---
+
+## How it works
+
+Standard RFC 6238 and RFC 4226 implementation:
+
+1. **Counter:** Takes `Math.floor(Date.now() / 1000 / 30)` to get the 30-second time step as an 8-byte big-endian integer.
+2. **Decode:** Converts the Base32 secret key into a `Uint8Array`.
+3. **Sign:** Computes an HMAC-SHA1 digest using `crypto.subtle.sign`.
+4. **Truncate:** Reads the dynamic offset from the last byte, pulls 4 bytes, drops the sign bit, and applies modulo 1,000,000 to return a padded 6-digit code.
+
+---
+
+## Security
+
+* Keys stay strictly in local storage (`localStorage` in the extension, `GM_setValue` in the userscript).
+* Zero network calls. No telemetry, no external scripts.
+* The entire crypto logic is under 50 lines of plain JavaScript.
+
+---
+
+## License
+
+MIT
