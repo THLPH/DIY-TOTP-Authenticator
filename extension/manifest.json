@@ -1,8 +1,13 @@
 ﻿{
   "manifest_version": 3,
-  "name": "tiny-totp",
-  "version": "1.0.0",
+  "name": "DIY TOTP Authenticator",
+  "version": "1.0.1",
+  "description": "Zero-dependency TOTP generator built with Web Crypto API",
   "action": {
-    "default_popup": "popup.html"
-  }
+    "default_popup": "popup.html",
+    "default_title": "DIY TOTP"
+  },
+  "permissions": [
+    "storage"
+  ]
 }
