@@ -1,8 +1,8 @@
 ﻿// ==UserScript==
 // @name         DIY TOTP Authenticator
 // @namespace    https://github.com/THLPH/DIY-TOTP-Authenticator
-// @version      1.0.0
-// @description  Zero-dependency RFC 6238 TOTP authenticator widget powered by Web Crypto
+// @version      1.1.0
+// @description  Zero-dependency RFC 6238 TOTP authenticator widget with autofill support
 // @match        *://*/*
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -59,6 +59,45 @@
     return (binary % 1000000).toString().padStart(6, "0");
   }
 
+  // --- Autofill Engine ---
+  async function attemptAutofill() {
+    const secret = GM_getValue("totp_secret", "");
+    const enabled = GM_getValue("autofill_enabled", false);
+    if (!secret || !enabled) return;
+
+    const selectors = [
+      'input[id*="otp" i]',
+      'input[name*="otp" i]',
+      'input[id*="2fa" i]',
+      'input[name*="2fa" i]',
+      'input[id*="totp" i]',
+      'input[name*="totp" i]',
+      'input[autocomplete="one-time-code"]',
+      'input#app_totp',
+      'input#verification_code'
+    ];
+
+    const input = document.querySelector(selectors.join(","));
+    if (input && !input.dataset.totpFilled) {
+      const code = await generateTOTP(secret);
+      input.focus();
+      input.value = code;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      input.dataset.totpFilled = "true";
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", attemptAutofill);
+  } else {
+    attemptAutofill();
+  }
+
+  const observer = new MutationObserver(() => attemptAutofill());
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  // --- UI Widget ---
   let activeInterval = null;
 
   function closeWidget() {
@@ -164,12 +203,25 @@
         text-align: center;
         min-height: 14px;
       }
+      .toggle-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 12px 0 6px 0;
+        padding-top: 8px;
+        border-top: 1px solid #313244;
+        font-size: 11px;
+        color: #cdd6f4;
+      }
+      .toggle-wrap input {
+        cursor: pointer;
+      }
       .input-group {
         display: flex;
         flex-direction: column;
         gap: 8px;
       }
-      input {
+      input[type="password"] {
         width: 100%;
         box-sizing: border-box;
         padding: 8px;
@@ -180,7 +232,7 @@
         font-size: 12px;
         outline: none;
       }
-      input:focus { border-color: #89b4fa; }
+      input[type="password"]:focus { border-color: #89b4fa; }
       button.primary {
         background: #89b4fa;
         color: #11111b;
@@ -245,6 +297,8 @@
         }
       };
     } else {
+      const isAutofill = GM_getValue("autofill_enabled", false);
+
       card.innerHTML = `
         <div class="header">
           <span class="title">Authenticator</span>
@@ -255,6 +309,10 @@
           <div class="timer-bar" id="bar"></div>
         </div>
         <div class="subtext" id="status">Click code to copy</div>
+        <div class="toggle-wrap">
+          <span>Autofill on login pages</span>
+          <input type="checkbox" id="toggle-autofill" ${isAutofill ? "checked" : ""} />
+        </div>
         <div class="footer">
           <button class="link-btn" id="reset-btn">Reset Key</button>
         </div>
@@ -264,9 +322,16 @@
       const codeEl = card.querySelector("#code");
       const barEl = card.querySelector("#bar");
       const statusEl = card.querySelector("#status");
+      const autofillToggle = card.querySelector("#toggle-autofill");
+
+      autofillToggle.onchange = (e) => {
+        GM_setValue("autofill_enabled", e.target.checked);
+        if (e.target.checked) attemptAutofill();
+      };
 
       card.querySelector("#reset-btn").onclick = () => {
         GM_deleteValue("totp_secret");
+        GM_deleteValue("autofill_enabled");
         renderWidget();
       };
 
