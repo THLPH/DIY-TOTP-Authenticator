@@ -19,7 +19,7 @@
 }
 
 async function generateTOTP(secret) {
-  const timeStep = Math.floor(Math.floor(Date.now() / 1000) / 30);
+  const timeStep = Math.floor(Date.now() / 1000 / 30);
   const buffer = new ArrayBuffer(8);
   new DataView(buffer).setUint32(4, timeStep, false);
 
