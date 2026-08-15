@@ -1,10 +1,5 @@
 ﻿# DIY TOTP Authenticator 🔑
 
-![Manifest V3](https://img.shields.io/badge/Chrome-Manifest_V3-blue?style=flat-square)
-![Dependencies](https://img.shields.io/badge/Dependencies-0-success?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-orange?style=flat-square)
-![RFC 6238](https://img.shields.io/badge/RFC-6238-lightgrey?style=flat-square)
-
 Zero-dependency 2FA code generator running on the browser's Web Crypto API (`crypto.subtle`). Generates standard 6-digit rolling codes locally without external libraries, analytics, or third-party servers.
 
 ---
@@ -12,9 +7,9 @@ Zero-dependency 2FA code generator running on the browser's Web Crypto API (`cry
 ## What's in here
 
 * `extension/` — Popup extension for Chromium-based browsers (Manifest V3).
-* `userscript/` — Standalone Tampermonkey script if you prefer not loading unpacked extensions.
+* `userscript/` — Standalone Tampermonkey script featuring a floating UI and optional in-page 2FA input autofill.
 
-Both use the same setup: save your Base32 secret once, watch the 30-second timer count down, and click the code to copy it.
+Both targets store your Base32 secret locally, display live 30-second countdowns, and support click-to-copy.
 
 ---
 
@@ -36,7 +31,8 @@ Works on Chrome, Brave, and Edge:
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/).
 2. Create a new script, paste the code from `userscript/tiny-totp.user.js`, and save.
-3. Click the Tampermonkey icon on any page and click **Open Authenticator** to pop up the widget.
+3. Click the Tampermonkey icon on any page and select **Open Authenticator** to pop up the widget.
+4. *(Optional)* Toggle **Autofill on login pages** inside the widget to automatically populate 2FA verification inputs on GitHub, AWS, and standard login forms.
 
 ---
 
@@ -53,7 +49,7 @@ Standard RFC 6238 and RFC 4226 implementation:
 
 ## Security
 
-* Keys stay strictly in local storage (`localStorage` in the extension, `GM_setValue` in the userscript).
+* Keys stay strictly in local storage (`chrome.storage.local` in the extension, `GM_setValue` in the userscript).
 * Zero network calls. No telemetry, no external scripts.
 * The entire crypto logic is under 50 lines of plain JavaScript.
 
