@@ -4,6 +4,14 @@ Zero-dependency 2FA code generator running on the browser's Web Crypto API (`cry
 
 ---
 
+## Why I made this
+
+I had this idea when GitHub started mandating two-factor authentication for active contributors. I didn't want to pull out a phone every time, nor did I want to install bloated Electron desktop apps or closed-source extensions packed with analytics just to run a basic HMAC-SHA1 hash. 
+
+This is a transparent, hackable alternative that runs the raw math directly on your machine with zero external dependencies.
+
+---
+
 ## What's in here
 
 * `extension/` — Popup extension for Chromium-based browsers (Manifest V3).
